@@ -1,31 +1,22 @@
-const Discord = require("discord.js")
-const db = require("quick.db")
+const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
+const ayarlar = require('../ayarlar.json');
 
-exports.run = async(client, message, args) => {  
+module.exports = {
+  data: new SlashCommandBuilder()
+    .setName('öneri')
+    .setDescription('Önerinizi bildirirsiniz.')
+    .addStringOption(o => o.setName('metin').setDescription('Öneriniz').setRequired(true)),
+  async execute(interaction) {
+    const text = interaction.options.getString('metin');
+    const embed = new EmbedBuilder()
+      .setTitle('Yeni Öneri')
+      .setDescription(text)
+      .addFields({ name: 'Gönderen', value: `${interaction.user.tag} (${interaction.user.id})` })
+      .setTimestamp();
 
-    const öneri = args.slice(0).join(' ');
-    if(!öneri) return message.channel.send("Bir öneri belirtmelisin. ")
-       
-  const embed = new Discord.MessageEmbed()
-.setTitle("Bana bir öneride bulundular :3")
-  .addField("Belirtilen Öneri:", öneri)
-  .addField("Öneri Belirten Kişi:", `Adı: **${message.author.tag}** - Etiketi: <@${message.author.id}> - ID: **${message.author.id}**`)
-  .setColor("BLUE")
-  .setFooter(client.user.username, client.user.avatarURL())
-  .setThumbnail(message.author.avatarURL({format: "gif"}))
-  message.channel.send(` Öneriniz başarıyla iletildi!`)
-  client.channels.cache.get("874877194445393961").send(embed)
-}
+    await interaction.reply({ content: 'Öneriniz alındı, teşekkürler!', ephemeral: true });
 
-exports.conf = {
-    enabled: true,
-    guildOnly: false,
-    aliases: ["öner"],
-    permLevel: 0
-}
-
-exports.help = {
-    name: "öneri",
-    description: "öneri bildirirsiniz",
-    usage: "öneri <öneri>"
-}
+    const owner = await interaction.client.users.fetch(ayarlar.sahip).catch(() => null);
+    if (owner) owner.send({ embeds: [embed] }).catch(() => { });
+  },
+};

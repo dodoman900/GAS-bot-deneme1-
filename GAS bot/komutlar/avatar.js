@@ -1,56 +1,18 @@
-const Discord = require('discord.js');
+const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
 
-exports.run = async (client, message, args)=> {
-//let us = message.guild.members.cache.find(u => args.slice(0).join(' ').includes(u.username))
-let muser = message.mentions.users.first();
-let userid;
-if(isNaN(args[0])){
-  if(!muser){
-    userid = message.author.id;
-  }else{
-    userid = muser.id;
-  }
-}else{
-  userid = args[0];
-}
-try{
-let user = await client.users.fetch(userid);
-let avatar = user.displayAvatarURL({dynamic: true, size: 1024})
-if(avatar.endsWith(".gif?size=1024")) {
+module.exports = {
+  data: new SlashCommandBuilder()
+    .setName('avatar')
+    .setDescription('Kullanıcının avatarını gösterir.')
+    .addUserOption(o => o.setName('kullanıcı').setDescription('Avatarı gösterilecek kullanıcı').setRequired(false)),
 
-let embed = new Discord.MessageEmbed()
-.setAuthor(user.tag + '', user.displayAvatarURL())
-.setDescription(`**[[PNG]](${user.displayAvatarURL({ format: 'png', size: 1024 })})** | **[[JPEG]](${user.displayAvatarURL({ format: 'jpeg', size: 1024 })})** | **[[GIF]](${user.displayAvatarURL({ format: 'gif', size: 1024 })})** | **[[WEBP]](${user.displayAvatarURL({ format: 'webp', size: 1024 })})**`)
-.setImage(user.displayAvatarURL({dynamic: true, size: 1024}))
-.setColor("RANDOM")
-message.channel.send(embed)
+  async execute(interaction) {
+    const user = interaction.options.getUser('kullanıcı') || interaction.user;
+    const embed = new EmbedBuilder()
+      .setTitle(`${user.username}#${user.discriminator}`)
+      .setImage(user.displayAvatarURL({ dynamic: true, size: 1024 }))
+      .setColor('Random');
 
-} else {
-
-  let embed = new Discord.MessageEmbed()
-.setAuthor(user.tag + '', user.displayAvatarURL())
-.setDescription(`**[[PNG]](${user.displayAvatarURL({ format: 'png',  size: 1024 })})** | **[[JPEG]](${user.displayAvatarURL({ format: 'jpeg',  size: 1024 })})** | **~~[GIF]~~** | **[[WEBP]](${user.displayAvatarURL({ format: 'webp',  size: 1024 })})**`)
-.setImage(user.displayAvatarURL({dynamic: true, size: 1024}))
-.setColor("RANDOM")
-message.channel.send(embed)
-
-}
-}catch{
-  message.channel.send(new Discord.MessageEmbed().setColor("RANDOM").setDescription("Kullanıcıyı Bulamadım!"));
-  return;
-}
-
-}
-
- exports.conf = {
-  enabled: true,
-  guildOnly: false,
-  aliases: ['avatarım'],
-  permLevel: 0
-};
-
-exports.help = {
-  name: 'avatar',
-  description: '',
-  usage: 'avatar [@kullanıcı]'
+    await interaction.reply({ embeds: [embed] });
+  },
 };

@@ -1,46 +1,28 @@
-const Discord = require('discord.js');
-const { EmbedBuilder } = require('discord.js');
-const database = require('quick.db');
+const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
+const Maintenance = require('../models/Maintenance');
+const ayarlar = require('../ayarlar.json');
 
-exports.run = async (client, message, args) => {// can#0002
-if(message.author.id !== '817403879725072395') return;
+module.exports = {
+  data: new SlashCommandBuilder()
+    .setName('bakım')
+    .setDescription('Botu bakım moduna alır veya çıkarır.'),
 
-function gönderkardesim(content) {
-const infoEmbed = new EmbedBuilder()
-.setColor('Blue')
-.setDescription(content)
-.setTimestamp()
-.setAuthor({ name: message.author.username, iconURL: message.author.displayAvatarURL({ dynamic: true }) });
-return message.channel.send({ embeds: [infoEmbed] })
+  async execute(interaction) {
+    if (interaction.user.id !== ayarlar.sahip) {
+      return interaction.reply({ content: 'Bu komutu yalnızca bot sahibi kullanabilir!', ephemeral: true });
+    }
+
+    const durum = await Maintenance.findOne({ botID: interaction.client.user.id });
+    if (durum) {
+      await Maintenance.deleteOne({ botID: interaction.client.user.id });
+      return interaction.reply('Bakım modu kapatıldı.');
+    } else {
+      await Maintenance.create({
+        botID: interaction.client.user.id,
+        authorID: interaction.user.id,
+        timestamp: Date.now(),
+      });
+      return interaction.reply('Bakım modu açıldı. Artık komutlar kullanılamayacak.');
+    }
+  },
 };
-
-const durum = await database.fetch(client.user.id);
-if(durum == true) {
-
-await database.delete(client.user.id);
-return gönderkardesim('Bakım artık sona erdi.');
-
-} else {
-
-await database.set(client.user.id, true);
-database.set(client.user.id+':)', { 
-author: message.author,
-time: Date.now() 
-});
-
-return gönderkardesim('Bakım modu açıldı.\nArtık hiç bir kimse komutları kullanamayacak.');
-};
-
-
-}; 
-exports.conf = {
-  enabled: true,
-  guildOnly: false,
-  aliases: ['bakım'],
-  permLevel: 0
-};
- 
-exports.help = {
-  name: 'bakım-modu',
-  usage: 'bakım',
-};// codare ♥

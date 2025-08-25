@@ -1,43 +1,29 @@
-const Discord = require("discord.js");
-const { EmbedBuilder } = require('discord.js');
-module.exports.run = async (bot, message, args) => {
-let bug = args.join(" ").slice(0);
-let user = message.author.username;
-let guild = message.guild.name;
-let guildid = message.guild.id;
-let kanal = message.channel.name;
-  let kanalid = message.channel.id;
-let channel = bot.channels.cache.get("874877419851513886")//bug repot kanal id
-let embed = new EmbedBuilder()
-.setTitle("Bug Bildirisi")
-.setColor("Red")
-.addFields(
-  { name: 'Bug', value: bug || 'Yok' },
-  { name: 'Report Eden', value: user, inline: true },
-  { name: 'Sunucu', value: guild, inline: true },
-  { name: 'Sunucu ID', value: guildid, inline: true },
-  { name: 'Kanal', value: kanal, inline: true },
-  { name: 'Kanal ID', value: kanalid, inline: true }
-);
-  const embed2 = new EmbedBuilder()
-    .setColor("Red")
-    .setDescription(`${message.author.username}, hata bildiriminiz yetkililere iletilmiştir. Geri dönüş yapılacaktır.`);
-    await message.channel.send({ embeds: [embed2] });
-const sent = await channel.send({ embeds: [embed] });
-if (sent) {
-  sent.react('❌').catch(()=>{});
-  sent.react('✔').catch(()=>{});
-}
-  
-}
-exports.conf = {
-  enabled: true,
-  guildOnly: false,
-  aliases: ['hatabildir', 'bugreport', 'bugbildir', 'hata', 'bug'],
-  permLevel: 0  
+const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
+
+module.exports = {
+  data: new SlashCommandBuilder()
+    .setName('bug')
+    .setDescription('Botla ilgili bir hatayı bildirir.')
+    .addStringOption(option =>
+      option.setName('hata')
+        .setDescription('Bildirilecek hata')
+        .setRequired(true)),
+
+  async execute(interaction) {
+    const hata = interaction.options.getString('hata');
+    const kanal = interaction.client.channels.cache.get('874877419851513886'); // Hata bildirimi kanalı
+
+    const embed = new EmbedBuilder()
+      .setTitle('Hata Bildirimi')
+      .setColor('Red')
+      .addFields(
+        { name: 'Hata', value: hata },
+        { name: 'Bildiren Kullanıcı', value: `${interaction.user.tag} (${interaction.user.id})` },
+        { name: 'Sunucu', value: interaction.guild.name, inline: true },
+        { name: 'Kanal', value: interaction.channel.name, inline: true },
+      );
+
+    await interaction.reply({ content: 'Hata bildiriminiz iletildi.', ephemeral: true });
+    if (kanal) await kanal.send({ embeds: [embed] });
+  },
 };
-exports.help = {
-  name: 'bug-bildir',
-  description: 'Botla ilgili hataları bildirirsiniz.',
-  usage: 'bug-bildir'
-}

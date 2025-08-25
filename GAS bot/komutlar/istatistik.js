@@ -1,41 +1,28 @@
-const Discord = require("discord.js");
-const moment = require("moment");
-const os = require("os");
-require("moment-duration-format");
-exports.run = async (client, message, args) => {
-  const seksizaman = moment
-    .duration(client.uptime)
-    .format(" D [gün], H [saat], m [dakika], s [saniye]");
-  const istatistikler = new Discord.MessageEmbed()
-    .setColor("RANDOM")
-    .setTimestamp()
-    .setFooter("© 2021 GroSS Anime Servers", client.user.avatarURL())
-    .addField("» **Botun Sahibi**", "<@782215331765813258>")
-    .addField("» **Gecikme süreleri**","Mesaj Gecikmesi: {ping1} ms \nBot Gecikmesi: {ping2} ms"
-        .replace("{ping1}", new Date().getTime() - message.createdTimestamp)
-        .replace("{ping2}", client.ws.ping),true)
-    .addField("» **Bellek kullanımı**",(process.memoryUsage().heapUsed / 1024 / 512).toFixed(2) + " MB",true)
-    .addField("» **Çalışma süresi**", seksizaman, true)
-    .addField("» **Kullanıcılar**",client.guilds.cache.reduce((a, b) => a + b.memberCount, 0).toLocaleString(), true)
-    .addField("» **Sunucular**", client.guilds.cache.size.toLocaleString(), true)
-    .addField("» **Kanallar**", client.channels.cache.size.toLocaleString(), true)
-    .addField("» **Node.JS sürüm**", `${process.version}`, true)
-    .addField("» **Müzik Çalınan Sunucu Sayısı**", client.voice.connections.size, true)
-    .addField("» **CPU**",`\`\`\`md\n${os.cpus().map(i => `${i.model}`)[0]}\`\`\``,true)
-    .addField("» **Bit**", `\`${os.arch()}\``, true)
-    .addField("» **İşletim Sistemi**", `\`\`${os.platform()}\`\``, true)
-  return message.channel.send(istatistikler);
-};
+const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
 
-exports.conf = {
-  enabled: true,
-  guildOnly: false,
-  aliases: ["i"],
-  permLevel: 0
-};
+module.exports = {
+  // Slash komut tanımı
+  data: new SlashCommandBuilder()
+    .setName('istatistik') // Komut adı
+    .setDescription('Botun istatistiklerini gösterir.'), // Komut açıklaması
 
-exports.help = {
-  name: "istatistik",
-  description: "Botun istatistiklerini gösterir",
-  usage: "istatistik"
+  // Komutun çalıştırılma işlevi
+  async execute(interaction) {
+    const uptime = Math.floor(process.uptime()); // Botun çalışma süresi
+    const memory = (process.memoryUsage().heapUsed / 1024 / 1024).toFixed(2); // Bellek kullanımı
+
+    // Embed oluşturma
+    const embed = new EmbedBuilder()
+      .setTitle('Bot İstatistikleri')
+      .setColor('Blue')
+      .addFields(
+        { name: 'Çalışma Süresi', value: `${Math.floor(uptime / 60)} dakika`, inline: true },
+        { name: 'Bellek Kullanımı', value: `${memory} MB`, inline: true },
+        { name: 'Sunucular', value: `${interaction.client.guilds.cache.size}`, inline: true },
+      )
+      .setTimestamp();
+
+    // Yanıt gönderme
+    await interaction.reply({ embeds: [embed] });
+  },
 };

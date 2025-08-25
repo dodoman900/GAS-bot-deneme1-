@@ -1,36 +1,23 @@
-const Discord = require("discord.js")
-const ms = require("ms")
-const db = require("quick.db")
-module.exports.run = async(client,message,args)=> {
-let zaman = args[0]
-let yazı = args.slice(1).join(" ")
+// filepath: c:\Users\Doğukan Adam\Desktop\GAS-bot-deneme1-\GAS bot\komutlar\hatırlat.js
+// Basit hatırlatıcı (in-memory). Slash parametreleri: süre (ör. 10m) ve mesaj.
 
-if(!zaman) return message.reply(":x: Bir süre girmelisin! \n !hatırlat GAS Botu >_<")
-if(!yazı) return message.reply(":x: Bir yazı girmelisin! \n \n !hatırlat GAS Botu >_<")
-db.set(`hatırlat_${message.author.id}`,Date.now() + ms(zaman))
-message.channel.send("Haaai,siparişiniz alındı gerekli sürede dönüş yapılacak :3")
-const interval = setInterval(function() {
+const { SlashCommandBuilder } = require('discord.js');
+const ms = require('ms');
 
-
-    if(Date.now() > db.fetch(`hatırlat_${message.author.id}`)){
-        db.delete(`hatırlat_${message.author.id}`)
-        message.author.send(`**Hatırlatma:**${yazı}`)
-        .catch(e => console.log(e))
-        clearInterval(interval)
-    }
-
-},1000)
-}
-
-exports.conf = {
-    enabled: true,
-    guildOnly: true,
-    aliases:[]
-}
-
-exports.help = {
-    name:"hatırlat",
-    description:"Hatırlatırsınız",
-    usage:"hatırlat 10m Dream Studio",
-    category:"genel"
-}
+module.exports = {
+  data: new SlashCommandBuilder()
+    .setName('hatırlat')
+    .setDescription('Belirtilen süre sonra DM ile hatırlatma gönderir.')
+    .addStringOption(o => o.setName('süre').setDescription('Ör: 10m, 2h').setRequired(true))
+    .addStringOption(o => o.setName('mesaj').setDescription('Hatırlatma mesajı').setRequired(true)),
+  async execute(interaction) {
+    const süre = interaction.options.getString('süre');
+    const msg = interaction.options.getString('mesaj');
+    const msz = ms(süre);
+    if (!msz) return interaction.reply({ content: 'Geçersiz süre formatı.', ephemeral: true });
+    await interaction.reply({ content: `Hatırlatma ayarlandı: ${süre}`, ephemeral: true });
+    setTimeout(async () => {
+      try { await interaction.user.send(`Hatırlatma: ${msg}`); } catch (e) {}
+    }, msz);
+  },
+};
